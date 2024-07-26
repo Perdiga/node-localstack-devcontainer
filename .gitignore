@@ -1,0 +1,4 @@
+src/node_modules
+nohup.out
+terraform/.terraform.lock.hcl
+.terraform

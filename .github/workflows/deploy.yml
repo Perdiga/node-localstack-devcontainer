@@ -1,0 +1,62 @@
+name: CI
+on: push
+
+jobs:
+  terraform-local-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: terraform
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v4
+
+    - name: Install Terraform
+      run: |
+        wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+        sudo apt update
+        sudo apt install terraform
+    - name: Install tflocal
+      run: pip install terraform-local
+
+    - name: Executes Terraform init
+      id: init
+      run: tflocal init
+
+    - name: Executes Terraform format
+      id: fmt
+      run: tflocal fmt -check
+
+    - name: Executes Terraform validate
+      id: validate
+      run: tflocal validate
+
+    - name: Executes Terraform init
+      id: init
+      run: tflocal apply -var-file=local.tfvars -auto-approve
+
+  app-local-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: src
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v4
+
+    - name: Setup node
+      uses: actions/setup-node@v4
+
+    - name: Install dependencies
+      run: npm install --production=false
+
+    - name: Run lint
+      run: npm run lint
+
+    - name: Run lint
+      run: npm run test
